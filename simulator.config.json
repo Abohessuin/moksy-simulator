@@ -1,0 +1,14 @@
+{
+  "host": "127.0.0.1",
+  "port": 4500,
+  "basePath": "",
+  "allowedOrigins": [
+    "*"
+  ],
+  "seed": 42,
+  "agreementPath": "./templates/API_Agreement_Two_Examples.docx",
+  "responses": {
+    "GET /products": 200,
+    "POST /products": 201
+  }
+}

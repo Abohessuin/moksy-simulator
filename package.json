@@ -1,0 +1,44 @@
+{
+  "name": "moksy",
+  "version": "1.0.0",
+  "description": "API Simulator that turns API agreements into callable mock endpoints",
+  "type": "module",
+  "bin": {
+    "moksy": "./bin/moksy.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "bin"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "mock",
+    "api",
+    "simulator",
+    "fastify",
+    "testing"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@fastify/cors": "^11.3.0",
+    "adm-zip": "^0.6.1",
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1",
+    "commander": "^15.0.0",
+    "fast-xml-parser": "^5.11.2",
+    "fastify": "^5.12.5"
+  },
+  "devDependencies": {
+    "@types/adm-zip": "^0.5.8",
+    "@types/node": "^26.6.4",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.3"
+  }
+}
