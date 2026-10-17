@@ -100,3 +100,38 @@ export const RULE_MESSAGES = {
   DEFAULT_INVALID_BOOL: (raw: string) => `Invalid boolean default value "${raw}". Expected true or false`,
   DEFAULT_INVALID_JSON: (type: string, raw: string) => `Invalid JSON default for ${type}: "${raw}"`
 } as const;
+
+export const VALIDATION_MESSAGES = {
+  VALIDATION_FAILED: 'Request validation failed',
+  MISSING_AUTH_HEADER: 'Missing required Authorization header',
+  INVALID_BEARER_TOKEN: 'Authorization header must follow Bearer token format',
+  UNSUPPORTED_MEDIA_TYPE: (received: string) =>
+    `Unsupported Media Type "${received}". Expected "application/json"`,
+  MISSING_CONTENT_TYPE: 'Missing Content-Type header; expected "application/json"',
+  MALFORMED_JSON_BODY: (err: string) => `Malformed JSON body: ${err}`,
+  UNKNOWN_QUERY_PARAM: (param: string) => `Unknown query parameter "${param}" is not allowed`,
+  COERCION_INTEGER_FAILED: (field: string, val: string) =>
+    `Field "${field}" must be a valid integer, received "${val}"`,
+  COERCION_NUMBER_FAILED: (field: string, val: string) =>
+    `Field "${field}" must be a valid number, received "${val}"`,
+  COERCION_BOOLEAN_FAILED: (field: string, val: string) =>
+    `Field "${field}" must be a boolean (true or false), received "${val}"`
+} as const;
+
+export const GENERATOR_MESSAGES = {
+  UNSATISFIABLE_SCHEMA: (msg: string) =>
+    `Generated response payload failed response schema validation: ${msg}`,
+  EXCEEDED_MAX_DEPTH: 'Maximum schema generation depth (5) exceeded',
+  UNSUPPORTED_TYPE: (type: string) => `Unsupported schema type for response generation: "${type}"`
+} as const;
+
+export const SERVER_MESSAGES = {
+  ROUTE_NOT_FOUND: (method: string, path: string) =>
+    `Route ${method} ${path} not found in API agreement`,
+  METHOD_NOT_ALLOWED: (method: string, path: string) =>
+    `Method ${method} not allowed for route ${path}`,
+  MALFORMED_JSON: 'Malformed JSON in request body',
+  SHUTDOWN_SIGNAL: (signal: string) =>
+    `Received ${signal}. Shutting down Moksy server gracefully...`,
+  SERVER_STARTED: (url: string) => `Moksy mock server listening at ${url}`
+} as const;

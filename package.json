@@ -1,6 +1,6 @@
 {
   "name": "moksy",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "API Simulator that turns API agreements into callable mock endpoints",
   "type": "module",
   "bin": {
@@ -10,12 +10,14 @@
   "types": "./dist/index.d.ts",
   "files": [
     "dist",
-    "bin"
+    "bin",
+    "templates"
   ],
   "scripts": {
     "build": "tsc",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "artifact": "node -e \"const fs = require('fs'); if (!fs.existsSync('.artifacts')) fs.mkdirSync('.artifacts');\" && npm pack --pack-destination=.artifacts"
   },
   "keywords": [
     "mock",

@@ -3,6 +3,7 @@ import process from 'node:process';
 import { formatDiagnosticError } from './common/diagnostic-reporter.js';
 import { loadAndValidateAgreement } from './modules/agreement/agreement-loader.js';
 import { loadConfig } from './modules/config/config-loader.js';
+import { startServer } from './server/index.js';
 
 export function createCli(): Command {
   const program = new Command();
@@ -28,8 +29,7 @@ export function createCli(): Command {
           host: options.host
         });
         const agreement = loadAndValidateAgreement(config.agreementPath, config);
-        console.log(`[Moksy] Loaded agreement with ${agreement.endpoints.length} endpoints.`);
-        console.log(`[Moksy] Server startup will be executed in Task 6.`);
+        await startServer({ config, agreement });
       } catch (err: any) {
         console.error(formatDiagnosticError(err));
         process.exit(1);
