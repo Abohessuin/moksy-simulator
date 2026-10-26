@@ -43,7 +43,10 @@ export function resolveResponseSchema(
   endpoint: NormalizedEndpoint,
   status: number
 ): any | null {
-  if (status === 204 || endpoint.successBodyContentType === 'none') {
+  if (
+    status === 204 ||
+    (status === endpoint.successStatus && endpoint.successBodyContentType === 'none')
+  ) {
     return null;
   }
 
@@ -57,6 +60,22 @@ export function resolveResponseSchema(
   }
 
   return null;
+}
+
+export function generateResponseForStatus(
+  endpoint: NormalizedEndpoint,
+  status: number,
+  prng?: Prng
+): GeneratedResponse {
+  if (status === 204) return { status };
+
+  const schema = resolveResponseSchema(endpoint, status);
+  if (!schema) return { status };
+
+  const effectivePrng = prng || createPrng();
+  const body = generateValue(schema, effectivePrng, 0, { maxDepth: 5 });
+  verifyGeneratedPayload(body, schema);
+  return { status, body };
 }
 
 /**
@@ -94,24 +113,6 @@ export function generateResponse(
   prng?: Prng
 ): GeneratedResponse {
   const status = resolveResponseStatus(endpoint, config);
-
-  if (status === 204) {
-    return { status: 204 };
-  }
-
-  const schema = resolveResponseSchema(endpoint, status);
-  if (!schema) {
-    return { status };
-  }
-
   const effectivePrng = prng || createPrng(config?.seed);
-  const body = generateValue(schema, effectivePrng, 0, { maxDepth: 5 });
-
-  // Self-validate generated body before returning
-  verifyGeneratedPayload(body, schema);
-
-  return {
-    status,
-    body
-  };
+  return generateResponseForStatus(endpoint, status, effectivePrng);
 }

@@ -8,6 +8,7 @@ const METADATA_KEY_MAP: Record<string, keyof RawEndpointMetadata> = {
   apiname: 'apiName',
   method: 'method',
   path: 'path',
+  collection: 'collection',
   authentication: 'authentication',
   requestbody: 'requestBody',
   successstatus: 'successStatus',
@@ -55,7 +56,7 @@ export function detectSectionHeading(text: string): SectionKind | null {
  * @returns {{ key: keyof RawEndpointMetadata; value: string } | null} Metadata entry or null.
  */
 export function extractMetadataEntry(text: string): { key: keyof RawEndpointMetadata; value: string } | null {
-  const match = text.match(/^(API\s+name|Method|Path|Authentication|Request\s+body|Success\s+status|Success\s+body):\s*(.*)$/i);
+  const match = text.match(/^(API\s+name|Method|Path|Collection|Authentication|Request\s+body|Success\s+status|Success\s+body):\s*(.*)$/i);
   if (!match) return null;
 
   const rawKey = match[1].toLowerCase().replace(/\s+/g, '');

@@ -9,6 +9,7 @@ export interface RawEndpointMetadata {
   apiName?: string;
   method?: string;
   path?: string;
+  collection?: string;
   authentication?: string;
   requestBody?: string;
   successStatus?: string;

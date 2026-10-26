@@ -2,6 +2,7 @@ import { MoksyAgreementError, MoksyConfigError } from '../../common/errors.js';
 import { AGREEMENT_MESSAGES, CONFIG_MESSAGES } from '../../common/messages.js';
 import { SimulatorConfig } from '../config/types.js';
 import { NormalizedAgreement, NormalizedEndpoint } from './types.js';
+import { validateStatefulCollections } from './stateful-validator.js';
 
 /**
  * Validates that there are no duplicate operations across the agreement.
@@ -157,6 +158,8 @@ export function validateStartup(
     validateNoBodyFor204(ep, filePath);
     validateValidationErrorTrigger(ep, filePath);
   }
+
+  validateStatefulCollections(agreement.endpoints, filePath);
 
   if (config && config.responses) {
     validateConfiguredResponses(agreement, config);

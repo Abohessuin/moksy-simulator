@@ -91,4 +91,4 @@ export const ERROR_RESPONSES_COLUMNS = ['status', 'trigger', 'field', 'type'] as
 /**
  * Optional column headers recognized across tables.
  */
-export const OPTIONAL_TABLE_COLUMNS = ['nullable', 'rules', 'default'] as const;
+export const OPTIONAL_TABLE_COLUMNS = ['nullable', 'rules', 'default', 'behavior'] as const;

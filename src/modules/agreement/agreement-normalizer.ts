@@ -26,6 +26,7 @@ import {
   TYPE_MAP,
 } from "./constants.js";
 import { parseRules } from "./rule-parser.js";
+import { STATE_AGREEMENT_MESSAGES } from "./messages.js";
 import { buildJsonSchema, FieldRowForSchema } from "./schema-builder.js";
 import {
   NormalizedAgreement,
@@ -33,6 +34,7 @@ import {
   ParsedErrorField,
   ParsedRequestField,
   ParsedResponseField,
+  RequestBehavior,
 } from "./types.js";
 
 interface ErrorContext {
@@ -102,6 +104,37 @@ export function normalizePath(
     );
   }
   return trimmed;
+}
+
+export function normalizeCollection(rawCollection: string | undefined): string | undefined {
+  if (!rawCollection || isPlaceholderCell(rawCollection)) return undefined;
+  const collection = sanitizeWordText(rawCollection);
+  if (!/^[A-Za-z][A-Za-z0-9_-]*$/.test(collection)) {
+    throw new MoksyAgreementError(
+      STATE_AGREEMENT_MESSAGES.COLLECTION_NAME_INVALID(collection)
+    );
+  }
+  return collection;
+}
+
+export function parseRequestBehavior(rawBehavior: string): RequestBehavior | undefined {
+  if (isPlaceholderCell(rawBehavior)) return undefined;
+  const normalized = sanitizeWordText(rawBehavior).trim();
+  const keyword = normalized.toLowerCase();
+  if (keyword === "page") return { kind: "page" };
+  if (keyword === "pagesize") return { kind: "pageSize" };
+
+  const match = normalized.match(/^(filter|search)\s*=\s*([A-Za-z][A-Za-z0-9_.]*)$/i);
+  if (match) {
+    return {
+      kind: match[1].toLowerCase() as "filter" | "search",
+      recordField: match[2],
+    };
+  }
+
+  throw new MoksyAgreementError(
+    STATE_AGREEMENT_MESSAGES.BEHAVIOR_INVALID(rawBehavior)
+  );
 }
 
 /**
@@ -273,6 +306,7 @@ export function normalizeEndpointMetadata(
   const method = normalizeMethod(metadata.method, metaCtx);
   const path = normalizePath(metadata.path, metaCtx);
   const pathParamNames = extractPathParamNames(path);
+  const collection = normalizeCollection(metadata.collection);
   const apiName = metadata.apiName?.trim() || `${method} ${path}`;
   const authentication = normalizeAuthentication(
     metadata.authentication,
@@ -295,6 +329,7 @@ export function normalizeEndpointMetadata(
     method,
     path,
     pathParamNames,
+    collection,
     authentication,
     requestBodyContentType,
     successStatus,
@@ -339,7 +374,7 @@ export function resolveTableColumnIndices(
   }
 
   // Also map optional columns if present
-  ["nullable", "rules", "default"].forEach((col) => {
+  ["nullable", "rules", "default", "behavior"].forEach((col) => {
     const idx = normalized.indexOf(col);
     if (idx !== -1) indexMap[col] = idx;
   });
@@ -409,6 +444,18 @@ export function parseRequestFieldRow(
     field: rawField,
   });
 
+  const rawBehavior =
+    indices["behavior"] !== undefined && row[indices["behavior"]]
+      ? row[indices["behavior"]]
+      : "";
+  const behavior = parseRequestBehavior(rawBehavior);
+  if (behavior && location !== "query") {
+    throw new MoksyAgreementError(
+        STATE_AGREEMENT_MESSAGES.BEHAVIOR_QUERY_ONLY,
+      { ...rowCtx, field: rawField },
+    );
+  }
+
   return {
     field: rawField,
     location,
@@ -417,6 +464,7 @@ export function parseRequestFieldRow(
     nullable: nullable || !!constraints.nullable,
     constraints,
     defaultValue: constraints.default,
+    behavior,
   };
 }
 
@@ -647,11 +695,11 @@ export function parseErrorFieldRow(
   }
 
   const rawTrigger = (row[indices["trigger"]] || "").toLowerCase().trim();
-  if (rawTrigger !== "validation" && rawTrigger !== "selected") {
+  if (!["validation", "selected", "not_found"].includes(rawTrigger)) {
     throw new MoksyAgreementError(
       AGREEMENT_MESSAGES.INVALID_ERROR_TRIGGER(
         row[indices["trigger"]],
-        "validation, selected",
+        "validation, selected, not_found",
       ),
       rowCtx,
     );

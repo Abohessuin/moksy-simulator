@@ -221,6 +221,7 @@ Before the tables, declare the endpoint properties using exact `Key: Value` line
 ```text
 Method: POST
 Path: /products
+Collection: products
 Authentication: required
 Request body: json
 Success status: 201
@@ -229,6 +230,7 @@ Success body: json
 
 - **Method:** `GET`, `POST`, `PUT`, `PATCH`, or `DELETE`.
 - **Path:** OpenAPI-style path template (e.g., `/items` or `/categories/{categoryId}/items/{itemId}`).
+- **Collection:** Optional shared in-memory collection name. Use the same name across conventional list, create, read, update, and delete endpoints. Omit it or use `-` for stateless generation.
 - **Authentication:** `none`, `bearer`, or `required`.
 - **Request body:** `json` or `none`.
 - **Success status:** Valid 2xx integer (e.g., `200`, `201`, `204`).
@@ -239,21 +241,22 @@ Success body: json
 ### Step 2: Request Fields Table
 Defines parameters accepted by the endpoint across path, query, headers, and request body.
 
-**Columns:** `Field` | `Location` | `Type` | `Required` | `Nullable` | `Rules`
+**Columns:** `Field` | `Location` | `Type` | `Required` | `Nullable` | `Rules` | `Behavior`
 
-| Field | Location | Type | Required | Nullable | Rules |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| `id` | `path` | `integer` | `yes` | `no` | `min=1` |
-| `category` | `query` | `string` | `no` | `no` | `enum=["electronics", "apparel"]` |
-| `name` | `body` | `string` | `yes` | `no` | `minLength=3; maxLength=100` |
-| `price` | `body` | `number` | `yes` | `no` | `min=0.01` |
-| `tags` | `body` | `array` | `no` | `no` | `minItems=1; maxItems=5` |
-| `tags[]` | `body` | `string` | `yes` | `no` | `pattern=^[a-z]+$` |
+| Field | Location | Type | Required | Nullable | Rules | Behavior |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| `id` | `path` | `integer` | `yes` | `no` | `min=1` | `-` |
+| `category` | `query` | `string` | `no` | `no` | `enum=["electronics", "apparel"]` | `filter=category` |
+| `search` | `query` | `string` | `no` | `no` | `maxLength=100` | `search=name` |
+| `page` | `query` | `integer` | `no` | `no` | `min=1; default=1` | `page` |
+| `pageSize` | `query` | `integer` | `no` | `no` | `min=1; max=50; default=10` | `pageSize` |
+| `name` | `body` | `string` | `yes` | `no` | `minLength=3; maxLength=100` | `-` |
 
 - **Locations:** `path`, `query`, `header`, or `body`.
 - **Types:** `string`, `integer`, `number`, `boolean`, `array`, `object`.
 - **Nested Fields:** Use dot notation for nested objects (`dimensions.width`) and brackets for array items (`tags[]` or `items[].id`).
 - **Placeholder Values:** Non-applicable cells can be filled with `-`, `—`, `none`, or left empty.
+- **Behavior:** Optional for query fields on a stateful list endpoint. Supported values are `filter=<recordField>`, `search=<recordField>`, `page`, and `pageSize`.
 
 ---
 
@@ -282,7 +285,7 @@ Defines error conditions, triggers, and error body schemas.
 | `400` | `validation` | `message` | `string` | `yes` | `no` | `default="Validation failed"` |
 | `400` | `validation` | `errors` | `array` | `no` | `no` | `-` |
 | `404` | `not_found` | `message` | `string` | `yes` | `no` | `default="Item not found"` |
-| `500` | `server_error` | `message` | `string` | `yes` | `no` | `default="Internal server error"` |
+| `500` | `selected` | `message` | `string` | `yes` | `no` | `default="Internal server error"` |
 
 ---
 
@@ -410,10 +413,12 @@ To ensure stability, zero maintenance overhead, and rapid mock startup, Moksy v1
 - Comprehensive request validation (path, query, headers, body) with scalar coercion.
 - Deterministic dummy data generation matching response schemas using Mulberry32 PRNG.
 - Static response status selection via config (e.g., simulating HTTP 500 server errors).
+- Optional in-memory collections for realistic CRUD journeys during a server session.
+- Equality filtering, single-field search, and pagination for stateful list endpoints.
 - Built-in CORS preflight negotiation.
 
 ### Explicitly Excluded (Out of Scope for v1.0.0)
-- **No Persistence:** No SQLite, Mongo, or local file writes; state is not retained across requests.
+- **No Durable Persistence:** Stateful collections live in server memory and reset to the seeded initial data after restart. No database or runtime file writes are used.
 - **No Request Logging:** Request logging is disabled to keep terminal output clean and focused.
 - **No Artificial Latency:** No delay controllers, random delays, or bandwidth throttling.
 - **No Complex Protocols:** No WebSockets, GraphQL, or HTTP streaming.

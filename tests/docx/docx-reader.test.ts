@@ -10,14 +10,14 @@ describe('docx-reader & table-extractor', () => {
     const elements = readDocxElements(sampleDocxPath);
     expect(elements.length).toBeGreaterThan(10);
     const tables = elements.filter((el) => el.type === 'table');
-    expect(tables.length).toBe(6); // 3 tables per endpoint * 2 endpoints
+    expect(tables.length).toBe(15); // 3 tables per endpoint * 5 endpoints
   });
 
   it('extracts two endpoint blocks with all tables intact', () => {
     const elements = readDocxElements(sampleDocxPath);
     const blocks = extractEndpointBlocks(elements);
 
-    expect(blocks.length).toBe(2);
+    expect(blocks.length).toBe(5);
 
     // Endpoint 1: List products
     const ep1 = blocks[0];
@@ -26,6 +26,8 @@ describe('docx-reader & table-extractor', () => {
     expect(ep1.metadata.path).toBe('/products');
     expect(ep1.metadata.successStatus).toBe('200');
     expect(ep1.metadata.successBody).toBe('json');
+    expect(ep1.metadata.collection).toBe('products');
+    expect(ep1.requestFieldsTable?.headers).toContain('Behavior');
     expect(ep1.requestFieldsTable?.rows.length).toBe(4);
     expect(ep1.successResponseTable?.rows.length).toBe(7);
     expect(ep1.errorResponsesTable?.rows.length).toBe(2);
@@ -37,8 +39,14 @@ describe('docx-reader & table-extractor', () => {
     expect(ep2.metadata.path).toBe('/products');
     expect(ep2.metadata.successStatus).toBe('201');
     expect(ep2.metadata.requestBody).toBe('json');
+    expect(ep2.metadata.collection).toBe('products');
     expect(ep2.requestFieldsTable?.rows.length).toBe(6);
     expect(ep2.successResponseTable?.rows.length).toBe(7);
     expect(ep2.errorResponsesTable?.rows.length).toBe(2);
+
+    expect(blocks[2].metadata.path).toBe('/products/{id}');
+    expect(blocks[2].metadata.method).toBe('GET');
+    expect(blocks[3].metadata.method).toBe('PATCH');
+    expect(blocks[4].metadata.method).toBe('DELETE');
   });
 });

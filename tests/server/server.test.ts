@@ -24,32 +24,6 @@ describe('Fastify HTTP Server Integration', () => {
 
   beforeAll(async () => {
     const agreement = loadAndValidateAgreement(sampleDocxPath);
-
-    // Also add a synthetic 204 endpoint to the agreement to test 204 behavior
-    const deleteEndpoint: any = {
-      apiName: 'Delete product',
-      method: 'DELETE',
-      path: '/products/{id}',
-      pathParamNames: ['id'],
-      authentication: 'none',
-      requestBodyContentType: 'none',
-      successStatus: 204,
-      successBodyContentType: 'none',
-      requestFields: [
-        { field: 'id', location: 'path', type: 'integer', required: true, nullable: false, constraints: {} }
-      ],
-      pathSchema: {
-        type: 'object',
-        properties: { id: { type: 'integer' } },
-        required: ['id']
-      },
-      errorResponses: {
-        400: { trigger: 'validation' }
-      }
-    };
-
-    agreement.endpoints.push(deleteEndpoint);
-
     app = createApp({ config: baseConfig, agreement });
     await app.ready();
   });
@@ -153,9 +127,16 @@ describe('Fastify HTTP Server Integration', () => {
   });
 
   it('handles 204 No Content returning status 204 and empty body', async () => {
+    const created = await app.inject({
+      method: 'POST',
+      url: '/products',
+      headers: { 'content-type': 'application/json' },
+      payload: { name: 'Temporary', price: 1, category: 'books' }
+    });
+    const id = JSON.parse(created.payload).id;
     const res = await app.inject({
       method: 'DELETE',
-      url: '/products/42'
+      url: `/products/${id}`
     });
 
     expect(res.statusCode).toBe(204);

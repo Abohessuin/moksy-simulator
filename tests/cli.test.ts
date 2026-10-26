@@ -6,6 +6,7 @@ describe('Moksy CLI', () => {
     const cli = createCli();
     expect(cli.name()).toBe('moksy');
     expect(cli.description()).toContain('API Simulator');
+    expect(cli.version()).toBe('0.1.0');
   });
 
   it('should have start and validate commands', () => {

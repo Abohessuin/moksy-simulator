@@ -11,7 +11,7 @@ export function createCli(): Command {
   program
     .name('moksy')
     .description('API Simulator — turns API agreements into callable mock endpoints')
-    .version('1.0.0');
+    .version('0.1.0');
 
   program
     .command('start')

@@ -20,7 +20,7 @@ describe('agreement-loader integration test with user template', () => {
     };
 
     const agreement = loadAndValidateAgreement(sampleDocxPath, config);
-    expect(agreement.endpoints.length).toBe(2);
+    expect(agreement.endpoints.length).toBe(5);
 
     const [getEp, postEp] = agreement.endpoints;
 
@@ -40,6 +40,11 @@ describe('agreement-loader integration test with user template', () => {
     expect(getEp.successResponseSchema.properties.data.type).toBe('array');
     expect(getEp.errorResponses[400].trigger).toBe('validation');
     expect(getEp.errorResponses[500].trigger).toBe('selected');
+    expect(getEp.collection).toBe('products');
+    expect(getEp.requestFields.find((field) => field.field === 'search')?.behavior).toEqual({
+      kind: 'search',
+      recordField: 'name'
+    });
 
     // Verify POST /products
     expect(postEp.method).toBe('POST');
@@ -54,6 +59,11 @@ describe('agreement-loader integration test with user template', () => {
     expect(postEp.bodySchema.properties.tags.type).toBe('array');
     expect(postEp.successResponseSchema).toBeDefined();
     expect(postEp.errorResponses[400].trigger).toBe('validation');
+
+    const readEp = agreement.endpoints[2];
+    expect(readEp.method).toBe('GET');
+    expect(readEp.path).toBe('/products/{id}');
+    expect(readEp.errorResponses[404].trigger).toBe('not_found');
   });
 
   it('allows selecting static error status (500) if defined in agreement', () => {
@@ -76,7 +86,7 @@ describe('agreement-loader integration test with user template', () => {
     const fs = require('node:fs');
     const docxBuffer = fs.readFileSync(sampleDocxPath);
     const agreement = loadAndValidateAgreement(docxBuffer);
-    expect(agreement.endpoints.length).toBe(2);
+    expect(agreement.endpoints.length).toBe(5);
     expect(agreement.endpoints[0].method).toBe('GET');
     expect(agreement.endpoints[1].method).toBe('POST');
   });

@@ -1,6 +1,12 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { NormalizedEndpoint } from '../modules/agreement/types.js';
-import { generateResponse, validateRequest } from '../modules/engine/index.js';
+import {
+  generateResponse,
+  generateResponseForStatus,
+  resolveResponseStatus,
+  validateRequest
+} from '../modules/engine/index.js';
+import { executeStatefulRequest } from '../modules/state/index.js';
 import { SERVER_CONSTANTS } from './constants.js';
 import { adaptFastifyRequest, convertPathToFastifySyntax } from './route-adapter.js';
 import { ServerOptions } from './types.js';
@@ -31,6 +37,19 @@ export function createEndpointHandler(
         .status(validation.status)
         .header('content-type', SERVER_CONSTANTS.JSON_CONTENT_TYPE)
         .send(validation.errorPayload);
+    }
+
+    if (endpoint.collection && options.statefulRuntime) {
+      const selectedStatus = resolveResponseStatus(endpoint, config);
+      const response = selectedStatus === endpoint.successStatus
+        ? executeStatefulRequest(endpoint, validation.coercedRequest, options.statefulRuntime)
+        : generateResponseForStatus(endpoint, selectedStatus, options.statefulRuntime.prng);
+
+      if (response.status === 204) return reply.status(204).send();
+      return reply
+        .status(response.status)
+        .header('content-type', SERVER_CONSTANTS.JSON_CONTENT_TYPE)
+        .send(response.body);
     }
 
     // 3. Step 2: Generate response (Task 5)

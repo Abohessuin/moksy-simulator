@@ -13,6 +13,12 @@ export interface FieldConstraints {
   nullable?: boolean;
 }
 
+export type RequestBehavior =
+  | { kind: 'filter'; recordField: string }
+  | { kind: 'search'; recordField: string }
+  | { kind: 'page' }
+  | { kind: 'pageSize' };
+
 export interface ParsedRequestField {
   field: string;
   location: FieldLocation;
@@ -21,6 +27,7 @@ export interface ParsedRequestField {
   nullable: boolean;
   constraints: FieldConstraints;
   defaultValue?: any;
+  behavior?: RequestBehavior;
 }
 
 export interface ParsedResponseField {
@@ -46,6 +53,7 @@ export interface NormalizedEndpoint {
   method: HttpMethod;
   path: string;
   pathParamNames: string[];
+  collection?: string;
   authentication: AuthType;
   requestBodyContentType: BodyContentType;
   successStatus: number;

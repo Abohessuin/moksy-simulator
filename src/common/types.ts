@@ -8,4 +8,4 @@ export type AuthType = 'none' | 'bearer' | 'required';
 
 export type BodyContentType = 'json' | 'none';
 
-export type ErrorTrigger = 'validation' | 'selected';
+export type ErrorTrigger = 'validation' | 'selected' | 'not_found';

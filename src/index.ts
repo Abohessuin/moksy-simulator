@@ -10,4 +10,5 @@ export * from './common/errors.js';
 export * from './modules/config/types.js';
 export * from './modules/agreement/types.js';
 export * from './modules/engine/index.js';
+export * from './modules/state/index.js';
 export * from './server/index.js';

@@ -13,8 +13,8 @@
 - **Testing Framework:** Vitest
 
 ### Strict v1.0.0 Scope Boundaries
-- **Included:** Dev-dependency CLI, in-memory route registration, path/query/header/body request validation, deliberate scalar parameter coercion, seeded dummy data generation, static status selection via config, JSON endpoints and no-body responses (such as 204), configurable CORS.
-- **Excluded:** Dashboards/UIs, runtime database/file persistence, state retention across requests, request logs, artificial delay/latency controllers, bandwidth throttling, random status selection, streaming, WebSockets, GraphQL, and real OAuth/JWT verification.
+- **Included:** Dev-dependency CLI, in-memory route registration, path/query/header/body request validation, deliberate scalar parameter coercion, seeded dummy data generation, optional in-memory CRUD collections, list filtering/search/pagination, static status selection via config, JSON endpoints and no-body responses (such as 204), configurable CORS.
+- **Excluded:** Dashboards/UIs, durable database/file persistence, state retention across server restarts, request logs, artificial delay/latency controllers, bandwidth throttling, random status selection, streaming, WebSockets, GraphQL, and real OAuth/JWT verification.
 
 ---
 
@@ -107,11 +107,13 @@ node ./bin/moksy.js start -c ./simulator.config.json -a ./templates/API_Agreemen
 - Endpoints in `.docx` documents must include metadata paragraphs:
   - `Method: <GET / POST / PUT / PATCH / DELETE>`
   - `Path: </resource/{id}>`
+  - `Collection: <name / ->` (optional; matching names share in-memory records)
   - `Authentication: <none / bearer / required>`
   - `Request body: <json / none>`
   - `Success status: <200 / 201 / 204>`
   - `Success body: <json / none>`
-- Request Fields table columns: `Field`, `Location`, `Type`, `Required`, `Nullable`, `Rules`.
+- Request Fields table columns: `Field`, `Location`, `Type`, `Required`, `Nullable`, `Rules`, `Behavior`.
+- Optional query behaviors: `filter=<field>`, `search=<field>`, `page`, and `pageSize`.
 - Success Response Fields table columns: `Field`, `Type`, `Required`, `Nullable`, `Rules`.
 - Error Responses table columns: `Status`, `Trigger`, `Field`, `Type`, `Required`, `Nullable`, `Rules`.
 - Semicolon-separated rule syntax:

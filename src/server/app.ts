@@ -2,6 +2,7 @@ import cors from '@fastify/cors';
 import fastify, { FastifyError, FastifyInstance } from 'fastify';
 import { SERVER_MESSAGES } from '../common/messages.js';
 import { SERVER_CONSTANTS } from './constants.js';
+import { createStatefulRuntime } from '../modules/state/index.js';
 import { registerDynamicRoutes } from './route-registrar.js';
 import { ServerOptions } from './types.js';
 
@@ -70,7 +71,12 @@ export function createApp(options: ServerOptions): FastifyInstance {
   });
 
   // 4. Mount dynamic agreement endpoints in memory
-  registerDynamicRoutes(app, options);
+  const statefulRuntime = options.statefulRuntime || createStatefulRuntime(
+    options.agreement,
+    options.config,
+    options.prng
+  );
+  registerDynamicRoutes(app, { ...options, statefulRuntime });
 
   return app;
 }
