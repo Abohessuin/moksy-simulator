@@ -39,21 +39,29 @@ export function createEndpointHandler(
         .send(validation.errorPayload);
     }
 
+    const dashboardStatus = options.dashboard?.getOverride(endpoint);
+    const selectedStatus = dashboardStatus ?? resolveResponseStatus(endpoint, config);
+    let response;
+
     if (endpoint.collection && options.statefulRuntime) {
-      const selectedStatus = resolveResponseStatus(endpoint, config);
-      const response = selectedStatus === endpoint.successStatus
+      response = selectedStatus === endpoint.successStatus
         ? executeStatefulRequest(endpoint, validation.coercedRequest, options.statefulRuntime)
         : generateResponseForStatus(endpoint, selectedStatus, options.statefulRuntime.prng);
-
-      if (response.status === 204) return reply.status(204).send();
-      return reply
-        .status(response.status)
-        .header('content-type', SERVER_CONSTANTS.JSON_CONTENT_TYPE)
-        .send(response.body);
+    } else {
+      response = selectedStatus === resolveResponseStatus(endpoint, config)
+        ? generateResponse(endpoint, config, prng)
+        : generateResponseForStatus(endpoint, selectedStatus, prng);
     }
 
-    // 3. Step 2: Generate response (Task 5)
-    const response = generateResponse(endpoint, config, prng);
+    options.dashboard?.capture({
+      endpoint,
+      request: validation.coercedRequest,
+      method: req.method,
+      url: req.url,
+      headers: req.headers,
+      status: response.status,
+      responseBody: response.body
+    });
 
     if (response.status === 204) {
       return reply.status(204).send();

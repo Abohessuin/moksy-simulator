@@ -3,12 +3,15 @@ import { NormalizedAgreement } from '../modules/agreement/types.js';
 import { SimulatorConfig } from '../modules/config/types.js';
 import { Prng } from '../modules/engine/index.js';
 import { StatefulRuntime } from '../modules/state/index.js';
+import type { DashboardController } from '../modules/dashboard/types/index.js';
 
 export interface ServerOptions {
   config: SimulatorConfig;
   agreement: NormalizedAgreement;
   prng?: Prng;
   statefulRuntime?: StatefulRuntime;
+  dashboard?: DashboardController;
+  dashboardEnabled?: boolean;
 }
 
 export interface ServerInstance {

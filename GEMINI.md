@@ -69,6 +69,7 @@ moksy-library/
 │   └── API_Agreement_Two_Examples.docx  # Reference document with two filled endpoints
 ├── tests/                               # Vitest automated test suites
 ├── simulator.config.json                # Sample static configuration file
+├── rsbuild.config.ts                    # Rsbuild bundle and DTS configuration
 ├── tsconfig.json                        # TypeScript configuration
 └── package.json                         # Package dependencies and scripts
 ```
@@ -80,7 +81,7 @@ moksy-library/
 ### Key Commands
 
 ```bash
-# Build the TypeScript project to dist/
+# Build the TypeScript library and CLI using Rsbuild to dist/
 npm run build
 
 # Run all automated tests via Vitest

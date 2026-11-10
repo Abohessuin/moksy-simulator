@@ -5,6 +5,7 @@ import { SERVER_CONSTANTS } from './constants.js';
 import { createStatefulRuntime } from '../modules/state/index.js';
 import { registerDynamicRoutes } from './route-registrar.js';
 import { ServerOptions } from './types.js';
+import { createDashboardController, registerDashboardRoutes } from '../modules/dashboard/index.js';
 
 /**
  * Creates and configures the Fastify server instance.
@@ -70,13 +71,22 @@ export function createApp(options: ServerOptions): FastifyInstance {
       });
   });
 
-  // 4. Mount dynamic agreement endpoints in memory
+  // 4. Create the shared state runtime and local dashboard controls.
   const statefulRuntime = options.statefulRuntime || createStatefulRuntime(
     options.agreement,
     options.config,
     options.prng
   );
-  registerDynamicRoutes(app, { ...options, statefulRuntime });
+  const dashboard = options.dashboard || createDashboardController({
+    config: options.config,
+    agreement: options.agreement,
+    runtime: statefulRuntime
+  });
+  const runtimeOptions = { ...options, statefulRuntime, dashboard };
+  if (options.dashboardEnabled !== false) registerDashboardRoutes(app, dashboard);
+
+  // 5. Mount agreement endpoints after the reserved dashboard namespace.
+  registerDynamicRoutes(app, runtimeOptions);
 
   return app;
 }

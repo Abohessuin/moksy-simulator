@@ -12,6 +12,7 @@ export function formatStartupBanner(serverUrl: string, endpoints: NormalizedEndp
     '  Moksy API Simulator — Mock Server Running',
     '==============================================================',
     `  Listening at: ${serverUrl}`,
+    `  Dashboard   : ${serverUrl}/_moksy`,
     `  Endpoints   : ${endpoints.length} active`,
     '--------------------------------------------------------------'
   ];
