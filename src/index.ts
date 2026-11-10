@@ -1,14 +1,19 @@
-export { createCli, runCli } from './cli.js';
-export { loadConfig, loadConfigFromObject } from './modules/config/config-loader.js';
-export { validateConfig } from './modules/config/config-validator.js';
-export { loadAndValidateAgreement } from './modules/agreement/agreement-loader.js';
-export { normalizeAgreement } from './modules/agreement/agreement-normalizer.js';
-export { validateStartup } from './modules/agreement/startup-validator.js';
-export { formatDiagnosticError } from './common/diagnostic-reporter.js';
-export * from './common/types.js';
-export * from './common/errors.js';
-export * from './modules/config/types.js';
-export * from './modules/agreement/types.js';
-export * from './modules/engine/index.js';
-export * from './modules/state/index.js';
-export * from './server/index.js';
+export { createCli, runCli } from "./cli.js";
+export {
+  loadConfig,
+  loadConfigFromObject,
+} from "./modules/config/config-loader.js";
+export { validateConfig } from "./modules/config/config-validator.js";
+export { getMoksyServerOrigin } from "./modules/config/server-address.js";
+export { loadAndValidateAgreement } from "./modules/agreement/agreement-loader.js";
+export { normalizeAgreement } from "./modules/agreement/agreement-normalizer.js";
+export { validateStartup } from "./modules/agreement/startup-validator.js";
+export { formatDiagnosticError } from "./common/diagnostic-reporter.js";
+export * from "./common/types.js";
+export * from "./common/errors.js";
+export * from "./modules/config/types.js";
+export * from "./modules/agreement/types.js";
+export * from "./modules/engine/index.js";
+export * from "./modules/state/index.js";
+export * from "./modules/dashboard/index.js";
+export * from "./server/index.js";

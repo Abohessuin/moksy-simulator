@@ -12,6 +12,7 @@ Moksy bridges frontend and backend teams during API design. It ingests structure
 - [Module Architecture & Pipeline](#module-architecture--pipeline)
 - [Installation & Quickstart](#installation--quickstart)
 - [CLI Reference](#cli-reference)
+- [Dashboard](#dashboard)
 - [Configuration Reference (`simulator.config.json`)](#configuration-reference-simulatorconfigjson)
 - [Authoring Guide: How to Write a Valid API Agreement](#authoring-guide-how-to-write-a-valid-api-agreement)
 - [AI Translation Guide: Converting Technical Designs into Agreements](#ai-translation-guide-converting-technical-designs-into-agreements)
@@ -100,21 +101,22 @@ Moksy bridges frontend and backend teams during API design. It ingests structure
 
 Moksy is organized into strictly decoupled domain modules:
 
-| Module | Responsibility | Key Files |
-| :--- | :--- | :--- |
-| **`common`** | Shared types, custom error classes, Unicode sanitizers, diagnostic reporters. | `errors.ts`, `text-sanitizer.ts`, `diagnostic-reporter.ts` |
-| **`modules/config`** | Loads, normalizes, and validates `simulator.config.json` and CLI overrides. | `config-loader.ts`, `config-validator.ts` |
-| **`modules/docx`** | Reads `.docx` archives in pure Node.js (via `adm-zip` and `fast-xml-parser`) without native dependencies. Extracts paragraphs and tables preserving document order. | `docx-reader.ts`, `table-extractor.ts` |
-| **`modules/agreement`** | Normalizes raw tables into structured endpoints, parses semicolon rules, builds nested JSON Schemas (dot/bracket notation), and validates startup invariants. | `agreement-loader.ts`, `agreement-normalizer.ts`, `rule-parser.ts`, `schema-builder.ts`, `startup-validator.ts` |
-| **`modules/engine`** | **Validation:** Coerces scalar parameters and checks requests against compiled Ajv schemas.<br>**Generation:** Produces deterministic mock payloads matching JSON Schemas via Mulberry32 PRNG. | `request-validator.ts`, `parameter-coercer.ts`, `response-generator.ts`, `prng.ts`, `value-generators.ts` |
-| **`server`** | Fastify HTTP transport layer. Translates OpenAPI path templates (`{id}` $\rightarrow$ `:id`), handles CORS, intercepts malformed JSON, and registers in-memory route closures. | `app.ts`, `route-registrar.ts`, `route-adapter.ts`, `banner.ts` |
-| **`cli`** | Commander-based CLI entry point wired to `bin/moksy.js`. Exposes `start` and `validate`. | `cli.ts` |
+| Module                  | Responsibility                                                                                                                                                                                 | Key Files                                                                                                       |
+| :---------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------------------------------------------------- |
+| **`common`**            | Shared types, custom error classes, Unicode sanitizers, diagnostic reporters.                                                                                                                  | `errors.ts`, `text-sanitizer.ts`, `diagnostic-reporter.ts`                                                      |
+| **`modules/config`**    | Loads, normalizes, and validates `simulator.config.json` and CLI overrides.                                                                                                                    | `config-loader.ts`, `config-validator.ts`                                                                       |
+| **`modules/docx`**      | Reads `.docx` archives in pure Node.js (via `adm-zip` and `fast-xml-parser`) without native dependencies. Extracts paragraphs and tables preserving document order.                            | `docx-reader.ts`, `table-extractor.ts`                                                                          |
+| **`modules/agreement`** | Normalizes raw tables into structured endpoints, parses semicolon rules, builds nested JSON Schemas (dot/bracket notation), and validates startup invariants.                                  | `agreement-loader.ts`, `agreement-normalizer.ts`, `rule-parser.ts`, `schema-builder.ts`, `startup-validator.ts` |
+| **`modules/engine`**    | **Validation:** Coerces scalar parameters and checks requests against compiled Ajv schemas.<br>**Generation:** Produces deterministic mock payloads matching JSON Schemas via Mulberry32 PRNG. | `request-validator.ts`, `parameter-coercer.ts`, `response-generator.ts`, `prng.ts`, `value-generators.ts`       |
+| **`server`**            | Fastify HTTP transport layer. Translates OpenAPI path templates (`{id}` $\rightarrow$ `:id`), handles CORS, intercepts malformed JSON, and registers in-memory route closures.                 | `app.ts`, `route-registrar.ts`, `route-adapter.ts`, `banner.ts`                                                 |
+| **`cli`**               | Commander-based CLI entry point wired to `bin/moksy.js`. Exposes `start` and `validate`.                                                                                                       | `cli.ts`                                                                                                        |
 
 ---
 
 ## Installation & Quickstart
 
 ### 1. Installation
+
 Install Moksy as a development dependency in your project:
 
 ```bash
@@ -122,6 +124,7 @@ npm install --save-dev moksy
 ```
 
 ### 2. Verify Your API Agreement
+
 Check that your Word agreement document has no syntax or constraint violations:
 
 ```bash
@@ -129,15 +132,49 @@ npx moksy validate -a ./agreements/API_Agreement.docx
 ```
 
 ### 3. Start the Mock Server
+
 ```bash
 npx moksy start -c ./simulator.config.json
 ```
+
+Open `http://127.0.0.1:4500/_moksy` to use the local dashboard.
+
+To open the dashboard from your React application, mount the development-only launcher and pass the same host and port used by Moksy:
+
+```tsx
+import { MoksyDevtools } from "moksy/react";
+import simulatorConfig from "./simulator.config.json";
+
+export function App() {
+  return (
+    <>
+      {/* Your application */}
+      {import.meta.env.DEV && (
+        <MoksyDevtools
+          config={{ host: simulatorConfig.host, port: simulatorConfig.port }}
+        />
+      )}
+    </>
+  );
+}
+```
+
+The launcher appears as a small floating button. Clicking it opens the dashboard in an isolated iframe over the application; it does not require a separate dashboard development server.
+
+## Dashboard
+
+The dashboard runs inside the same Fastify process as the mock API and is restricted to local access. It currently shows two focused sections that mirror the active agreement and runtime:
+
+- **Setup** shows the active configuration, agreement, server URL, seed, endpoint count, and stateful collection count. Reloading resets ephemeral collections and response overrides from the configured seed.
+- **APIs** groups endpoints by stateful collection or independent/stateless behavior. A declared error status can be activated immediately and reset without restarting Moksy. Forced errors bypass stateful mutations.
+  The dashboard is an agreement-driven workflow tool rather than a general API request composer. Mock collection data remains in memory and resets with the server. The workflow-testing implementation remains in the codebase for future design work, but it is intentionally not shown in the dashboard yet.
 
 ---
 
 ## CLI Reference
 
 ### `moksy start`
+
 Boots the in-memory Fastify mock server and begins serving mock endpoints.
 
 ```bash
@@ -145,12 +182,14 @@ npx moksy start [options]
 ```
 
 **Options:**
+
 - `-c, --config <path>`: Path to configuration file (default: `./simulator.config.json`).
 - `-a, --agreement <path>`: Path to `.docx` agreement file (overrides config setting).
 - `-p, --port <number>`: Port to listen on (default: `4500` or config setting).
 - `-H, --host <string>`: Host address to bind to (default: `127.0.0.1` or config setting).
 
 ### `moksy validate`
+
 Performs an offline syntax and invariant check on the `.docx` file without starting a server.
 
 ```bash
@@ -158,7 +197,8 @@ npx moksy validate -a <path-to-docx>
 ```
 
 **Options:**
-- `-a, --agreement <path>` *(Required)*: Path to `.docx` agreement file.
+
+- `-a, --agreement <path>` _(Required)_: Path to `.docx` agreement file.
 
 ---
 
@@ -171,10 +211,7 @@ Moksy is configured via a static JSON file. All paths are resolved relative to t
   "host": "127.0.0.1",
   "port": 4500,
   "basePath": "/api/v1",
-  "allowedOrigins": [
-    "http://localhost:3000",
-    "http://localhost:5173"
-  ],
+  "allowedOrigins": ["http://localhost:3000", "http://localhost:5173"],
   "seed": 42,
   "agreementPath": "./templates/API_Agreement_Two_Examples.docx",
   "responses": {
@@ -187,15 +224,15 @@ Moksy is configured via a static JSON file. All paths are resolved relative to t
 
 ### Field Definitions
 
-| Property | Type | Default | Description |
-| :--- | :--- | :--- | :--- |
-| `host` | `string` | `"127.0.0.1"` | IP address to bind the mock server. |
-| `port` | `integer` | `4500` | Port number (1024–65535). |
-| `basePath` | `string` | `""` | Optional URL prefix prepended to all endpoints (e.g. `"/api/v1"`). |
-| `allowedOrigins` | `string[]` | `["*"]` | Allowed CORS origins for browser clients. |
-| `seed` | `integer` | `undefined` | Optional PRNG seed. If set, response data generation is 100% deterministic and reproducible across server restarts. |
-| `agreementPath` | `string` | *(Required)* | Path to the Word document (`.docx`) file. |
-| `responses` | `object` | `{}` | Static status selection dictionary mapping `"METHOD /path"` to an HTTP status code defined in the agreement. |
+| Property         | Type       | Default       | Description                                                                                                         |
+| :--------------- | :--------- | :------------ | :------------------------------------------------------------------------------------------------------------------ |
+| `host`           | `string`   | `"127.0.0.1"` | IP address to bind the mock server.                                                                                 |
+| `port`           | `integer`  | `4500`        | Port number (1024–65535).                                                                                           |
+| `basePath`       | `string`   | `""`          | Optional URL prefix prepended to all endpoints (e.g. `"/api/v1"`).                                                  |
+| `allowedOrigins` | `string[]` | `["*"]`       | Allowed CORS origins for browser clients.                                                                           |
+| `seed`           | `integer`  | `undefined`   | Optional PRNG seed. If set, response data generation is 100% deterministic and reproducible across server restarts. |
+| `agreementPath`  | `string`   | _(Required)_  | Path to the Word document (`.docx`) file.                                                                           |
+| `responses`      | `object`   | `{}`          | Static status selection dictionary mapping `"METHOD /path"` to an HTTP status code defined in the agreement.        |
 
 > **Validation Precedence Guarantee:** Setting `"GET /products/{id}": 500` forces the server to return an HTTP 500 error response. However, if a request has invalid inputs (e.g., missing path parameter or wrong type), **validation failure strictly takes precedence** and returns HTTP 400.
 
@@ -208,6 +245,7 @@ Moksy reads Microsoft Word (`.docx`) documents containing structured endpoint de
 ### Structure of an Endpoint Block
 
 Every endpoint in the document consists of:
+
 1. **Metadata Paragraphs** (Endpoint header)
 2. **Request Fields Table**
 3. **Success Response Fields Table**
@@ -216,6 +254,7 @@ Every endpoint in the document consists of:
 ---
 
 ### Step 1: Endpoint Metadata Paragraphs
+
 Before the tables, declare the endpoint properties using exact `Key: Value` lines:
 
 ```text
@@ -239,18 +278,19 @@ Success body: json
 ---
 
 ### Step 2: Request Fields Table
+
 Defines parameters accepted by the endpoint across path, query, headers, and request body.
 
 **Columns:** `Field` | `Location` | `Type` | `Required` | `Nullable` | `Rules` | `Behavior`
 
-| Field | Location | Type | Required | Nullable | Rules | Behavior |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| `id` | `path` | `integer` | `yes` | `no` | `min=1` | `-` |
-| `category` | `query` | `string` | `no` | `no` | `enum=["electronics", "apparel"]` | `filter=category` |
-| `search` | `query` | `string` | `no` | `no` | `maxLength=100` | `search=name` |
-| `page` | `query` | `integer` | `no` | `no` | `min=1; default=1` | `page` |
-| `pageSize` | `query` | `integer` | `no` | `no` | `min=1; max=50; default=10` | `pageSize` |
-| `name` | `body` | `string` | `yes` | `no` | `minLength=3; maxLength=100` | `-` |
+| Field      | Location | Type      | Required | Nullable | Rules                             | Behavior          |
+| :--------- | :------- | :-------- | :------- | :------- | :-------------------------------- | :---------------- |
+| `id`       | `path`   | `integer` | `yes`    | `no`     | `min=1`                           | `-`               |
+| `category` | `query`  | `string`  | `no`     | `no`     | `enum=["electronics", "apparel"]` | `filter=category` |
+| `search`   | `query`  | `string`  | `no`     | `no`     | `maxLength=100`                   | `search=name`     |
+| `page`     | `query`  | `integer` | `no`     | `no`     | `min=1; default=1`                | `page`            |
+| `pageSize` | `query`  | `integer` | `no`     | `no`     | `min=1; max=50; default=10`       | `pageSize`        |
+| `name`     | `body`   | `string`  | `yes`    | `no`     | `minLength=3; maxLength=100`      | `-`               |
 
 - **Locations:** `path`, `query`, `header`, or `body`.
 - **Types:** `string`, `integer`, `number`, `boolean`, `array`, `object`.
@@ -261,31 +301,33 @@ Defines parameters accepted by the endpoint across path, query, headers, and req
 ---
 
 ### Step 3: Success Response Fields Table
+
 Defines the structure of the JSON payload returned on success.
 
 **Columns:** `Field` | `Type` | `Required` | `Nullable` | `Rules`
 
-| Field | Type | Required | Nullable | Rules |
-| :--- | :--- | :--- | :--- | :--- |
-| `id` | `integer` | `yes` | `no` | `min=1` |
-| `title` | `string` | `yes` | `no` | `minLength=1; maxLength=120` |
-| `inStock` | `boolean` | `yes` | `no` | `-` |
+| Field     | Type      | Required | Nullable | Rules                        |
+| :-------- | :-------- | :------- | :------- | :--------------------------- |
+| `id`      | `integer` | `yes`    | `no`     | `min=1`                      |
+| `title`   | `string`  | `yes`    | `no`     | `minLength=1; maxLength=120` |
+| `inStock` | `boolean` | `yes`    | `no`     | `-`                          |
 
-*(If `Success status` is `204`, this table must be omitted or left empty).*
+_(If `Success status` is `204`, this table must be omitted or left empty)._
 
 ---
 
 ### Step 4: Error Responses Table
+
 Defines error conditions, triggers, and error body schemas.
 
 **Columns:** `Status` | `Trigger` | `Field` | `Type` | `Required` | `Nullable` | `Rules`
 
-| Status | Trigger | Field | Type | Required | Nullable | Rules |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| `400` | `validation` | `message` | `string` | `yes` | `no` | `default="Validation failed"` |
-| `400` | `validation` | `errors` | `array` | `no` | `no` | `-` |
-| `404` | `not_found` | `message` | `string` | `yes` | `no` | `default="Item not found"` |
-| `500` | `selected` | `message` | `string` | `yes` | `no` | `default="Internal server error"` |
+| Status | Trigger      | Field     | Type     | Required | Nullable | Rules                             |
+| :----- | :----------- | :-------- | :------- | :------- | :------- | :-------------------------------- |
+| `400`  | `validation` | `message` | `string` | `yes`    | `no`     | `default="Validation failed"`     |
+| `400`  | `validation` | `errors`  | `array`  | `no`     | `no`     | `-`                               |
+| `404`  | `not_found`  | `message` | `string` | `yes`    | `no`     | `default="Item not found"`        |
+| `500`  | `selected`   | `message` | `string` | `yes`    | `no`     | `default="Internal server error"` |
 
 ---
 
@@ -293,23 +335,24 @@ Defines error conditions, triggers, and error body schemas.
 
 Specify validation and generation constraints in the `Rules` column using `key=value` pairs separated by semicolons:
 
-| Rule | Supported Types | Example | Description |
-| :--- | :--- | :--- | :--- |
-| `min=<num>` | `integer`, `number` | `min=1` | Minimum numerical value. |
-| `max=<num>` | `integer`, `number` | `max=1000` | Maximum numerical value. |
-| `minLength=<int>` | `string` | `minLength=5` | Minimum string length. |
-| `maxLength=<int>` | `string` | `maxLength=50` | Maximum string length. |
-| `pattern=<regex>` | `string` | `pattern=^[A-Z]{3}-[0-9]{4}$` | Regular expression pattern. |
-| `enum=[...]` | All primitive types | `enum=["draft", "published"]` | Allowed set of values. |
-| `minItems=<int>` | `array` | `minItems=1` | Minimum number of items. |
-| `maxItems=<int>` | `array` | `maxItems=10` | Maximum number of items. |
-| `default=<val>` | All types | `default="active"` | Fallback / fixed value. |
+| Rule              | Supported Types     | Example                       | Description                 |
+| :---------------- | :------------------ | :---------------------------- | :-------------------------- |
+| `min=<num>`       | `integer`, `number` | `min=1`                       | Minimum numerical value.    |
+| `max=<num>`       | `integer`, `number` | `max=1000`                    | Maximum numerical value.    |
+| `minLength=<int>` | `string`            | `minLength=5`                 | Minimum string length.      |
+| `maxLength=<int>` | `string`            | `maxLength=50`                | Maximum string length.      |
+| `pattern=<regex>` | `string`            | `pattern=^[A-Z]{3}-[0-9]{4}$` | Regular expression pattern. |
+| `enum=[...]`      | All primitive types | `enum=["draft", "published"]` | Allowed set of values.      |
+| `minItems=<int>`  | `array`             | `minItems=1`                  | Minimum number of items.    |
+| `maxItems=<int>`  | `array`             | `maxItems=10`                 | Maximum number of items.    |
+| `default=<val>`   | All types           | `default="active"`            | Fallback / fixed value.     |
 
 ---
 
 ### Mandatory Startup Invariant Checks
 
 Moksy executes strict invariant validation upon boot. The server will safely abort with detailed diagnostics if:
+
 1. **Duplicate Routes:** Two endpoints declare the same `METHOD + Path`.
 2. **Missing Path Parameters:** A URL contains `{param}`, but no matching row with `Location: path` and `Required: yes` exists in Request Fields.
 3. **Invalid 204 Responses:** Status 204 has `Success body` set to `json` or defines response fields.
@@ -332,6 +375,7 @@ You are a technical documentation assistant specializing in Moksy API Agreement 
 Your task is to convert the provided API technical design into formatted tables matching Moksy's strict .docx specification.
 
 Strict Formatting Rules You Must Follow:
+
 1. Metadata Paragraphs:
    Provide exact key-value lines before tables:
    Method: <GET | POST | PUT | PATCH | DELETE>
@@ -368,6 +412,7 @@ Strict Formatting Rules You Must Follow:
 ## Deployment & Environment Setup
 
 ### 1. Local Frontend Development
+
 In local development, frontend engineers run Moksy as a background dev dependency:
 
 ```json
@@ -380,24 +425,26 @@ In local development, frontend engineers run Moksy as a background dev dependenc
 ```
 
 Point your frontend API client to the mock server base URL:
+
 ```typescript
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:4500';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:4500";
 
 export async function fetchProducts() {
   const res = await fetch(`${API_BASE_URL}/products`);
-  if (!res.ok) throw new Error('API error');
+  if (!res.ok) throw new Error("API error");
   return res.json();
 }
 ```
 
 ### 2. Staging / Isolated Mock Deployment
+
 When deploying a shared mock simulator for team testing or QA environments (e.g., in Docker or CI runners):
 
 1. Install production dependencies only:
    ```bash
    npm install --omit=dev
    ```
-   *(Moksy packages its runtime dependencies—Fastify, Ajv, etc.—in `dependencies`, so it runs completely without devDependencies).*
+   _(Moksy packages its runtime dependencies—Fastify, Ajv, etc.—in `dependencies`, so it runs completely without devDependencies)._
 2. Bind the host to `0.0.0.0` in `simulator.config.json` or via `-H 0.0.0.0` to allow external network traffic.
 3. Configure `allowedOrigins` to match your staging environment domains.
 
@@ -408,6 +455,7 @@ When deploying a shared mock simulator for team testing or QA environments (e.g.
 To ensure stability, zero maintenance overhead, and rapid mock startup, Moksy v1.0.0 defines strict functional boundaries:
 
 ### Supported Features
+
 - Ingestion of `.docx` table agreements via pure Node.js archive parsing.
 - Dynamic Fastify route registration.
 - Comprehensive request validation (path, query, headers, body) with scalar coercion.
@@ -418,6 +466,7 @@ To ensure stability, zero maintenance overhead, and rapid mock startup, Moksy v1
 - Built-in CORS preflight negotiation.
 
 ### Explicitly Excluded (Out of Scope for v1.0.0)
+
 - **No Durable Persistence:** Stateful collections live in server memory and reset to the seeded initial data after restart. No database or runtime file writes are used.
 - **No Request Logging:** Request logging is disabled to keep terminal output clean and focused.
 - **No Artificial Latency:** No delay controllers, random delays, or bandwidth throttling.

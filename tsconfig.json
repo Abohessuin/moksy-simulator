@@ -13,5 +13,11 @@
     "types": ["node"]
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "tests"]
+  "exclude": [
+    "node_modules",
+    "dist",
+    "tests",
+    "src/modules/dashboard/ui",
+    "src/react"
+  ]
 }
