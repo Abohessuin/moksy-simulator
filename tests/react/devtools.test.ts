@@ -34,30 +34,18 @@ describe("packaged React devtools", () => {
   });
 
   it("renders only the launcher until opened", () => {
-    const markup = renderToStaticMarkup(
-      createElement(Devtools, { config: {} }),
-    );
+    const markup = renderToStaticMarkup(createElement(Devtools));
     expect(markup).toContain('aria-label="Open Moksy Devtools"');
     expect(markup).toContain('aria-expanded="false"');
     expect(markup).not.toContain("<iframe");
     expect(markup).not.toContain('role="dialog"');
   });
 
-  it("opens the dashboard at the configured origin independently of the mock API base path", () => {
-    const config = { host: "localhost", port: 4701, basePath: "/api/v2" };
-    const markup = renderToStaticMarkup(
-      createElement(Devtools, {
-        config,
-        initialIsOpen: true,
-        position: "bottom-left",
-      }),
-    );
-
-    expect(markup).toContain('role="dialog"');
-    expect(markup).toContain('aria-expanded="true"');
-    expect(markup).toContain('aria-label="Close Moksy Devtools"');
-    expect(markup).toContain('src="http://localhost:4701/_moksy"');
-    expect(markup).not.toContain("/api/v2");
+  it("uses the standard Moksy dashboard address without consumer props", () => {
+    const bundle = fs.readFileSync(bundlePath, "utf8");
+    expect(bundle).toContain("127.0.0.1");
+    expect(bundle).toContain("4500");
+    expect(bundle).toContain("/_moksy");
   });
 
   it("preserves the client boundary and external React without bundling server modules", () => {

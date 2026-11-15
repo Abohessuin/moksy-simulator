@@ -2,7 +2,6 @@ import { devtoolsStyles } from "../styles.js";
 
 interface DevtoolsViewProps {
   open: boolean;
-  position: "bottom-left" | "bottom-right";
   dashboardUrl: string;
   onOpen: () => void;
   onClose: () => void;
@@ -16,7 +15,6 @@ interface DevtoolsViewProps {
  */
 export function DevtoolsView({
   open,
-  position,
   dashboardUrl,
   onOpen,
   onClose,
@@ -31,7 +29,7 @@ export function DevtoolsView({
         onClick={onOpen}
         style={{
           ...devtoolsStyles.launcher,
-          ...(position === "bottom-left" ? { left: 20 } : { right: 20 }),
+          right: 20,
         }}
       >
         M
