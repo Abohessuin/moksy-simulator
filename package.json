@@ -14,7 +14,7 @@
       "import": "./dist/index.js"
     },
     "./react": {
-      "types": "./dist/react/index.d.ts",
+      "types": "./dist/frontend/index.d.ts",
       "import": "./dist/react/index.js"
     }
   },
@@ -24,11 +24,11 @@
     "templates"
   ],
   "scripts": {
-    "build": "rsbuild build && vite build --config vite.dashboard.config.ts && vite build --config vite.react.config.ts && tsc -p src/react/tsconfig.json",
+    "build": "rsbuild build && vite build --config vite.dashboard.config.ts && vite build --config vite.react.config.ts && tsc -p src/frontend/tsconfig.json",
     "build:dashboard": "vite build --config vite.dashboard.config.ts",
     "dev:dashboard": "vite --config vite.dashboard.config.ts",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit && tsc -p src/modules/dashboard/ui/tsconfig.json && tsc -p src/react/tsconfig.json --noEmit",
+    "typecheck": "tsc --noEmit && tsc -p src/modules/dashboard/ui/tsconfig.json && tsc -p src/frontend/tsconfig.json --noEmit",
     "artifact": "node -e \"const fs = require('fs'); if (!fs.existsSync('.artifacts')) fs.mkdirSync('.artifacts');\" && npm pack --pack-destination=.artifacts"
   },
   "keywords": [

@@ -1,4 +1,5 @@
-import type { Workspace } from '../types';
+import { AGREEMENT_TEMPLATE_URL } from "../api";
+import type { Workspace } from "../types";
 
 interface SetupViewProps {
   workspace: Workspace;
@@ -24,7 +25,9 @@ function Stat({ label, value, good, mono }: StatProps) {
   return (
     <div className="stat">
       <span>{label}</span>
-      <strong className={`${good ? 'goodText' : ''} ${mono ? 'mono' : ''}`}>{value}</strong>
+      <strong className={`${good ? "goodText" : ""} ${mono ? "mono" : ""}`}>
+        {value}
+      </strong>
     </div>
   );
 }
@@ -35,7 +38,12 @@ function Stat({ label, value, good, mono }: StatProps) {
  * @param props - Workspace data, record count, pending state, and reset callback.
  * @returns The Setup screen element.
  */
-export function SetupView({ workspace, recordCount, pending, onReset }: SetupViewProps) {
+export function SetupView({
+  workspace,
+  recordCount,
+  pending,
+  onReset,
+}: SetupViewProps) {
   return (
     <div className="setupWrap">
       <div className="heading">
@@ -63,9 +71,17 @@ export function SetupView({ workspace, recordCount, pending, onReset }: SetupVie
             </div>
           </div>
           <div className="note">
-            <b>Reload current workspace.</b> Reset response controls and regenerate in-memory data
-            from the configured seed. Saved scenarios remain available.
+            <b>Reload current workspace.</b> Reset response controls and
+            regenerate in-memory data from the configured seed. Saved scenarios
+            remain available.
           </div>
+          <a
+            className="downloadButton"
+            href={AGREEMENT_TEMPLATE_URL}
+            download="API_Agreement_Template.docx"
+          >
+            Download API agreement template
+          </a>
         </article>
         <article className="panel">
           <h2>⌁ Current runtime</h2>
@@ -73,14 +89,22 @@ export function SetupView({ workspace, recordCount, pending, onReset }: SetupVie
           <Stat label="Base URL" value={workspace.baseUrl} mono />
           <Stat label="Port" value={String(workspace.port)} />
           <Stat label="Seed" value={workspace.seed} />
-          <Stat label="Stateful collections" value={`${workspace.collectionCount} · ${recordCount} records`} />
-          <Stat label="Endpoints" value={`${workspace.endpointCount} discovered`} />
+          <Stat
+            label="Stateful collections"
+            value={`${workspace.collectionCount} · ${recordCount} records`}
+          />
+          <Stat
+            label="Endpoints"
+            value={`${workspace.endpointCount} discovered`}
+          />
         </article>
       </div>
       <div className="bottomActions">
-        <span>Mock data is ephemeral; saved QA scenarios are persistent artifacts.</span>
+        <span>
+          Mock data is ephemeral; saved QA scenarios are persistent artifacts.
+        </span>
         <button className="primary" onClick={onReset} disabled={pending}>
-          {pending ? 'Reloading…' : '↻ Reload workspace'}
+          {pending ? "Reloading…" : "↻ Reload workspace"}
         </button>
       </div>
     </div>

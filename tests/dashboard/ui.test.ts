@@ -1,109 +1,149 @@
-import { createElement } from 'react';
-import { renderToStaticMarkup } from 'react-dom/server';
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { loadDashboard, request } from '../../src/modules/dashboard/ui/src/api.js';
-import { DashboardView } from '../../src/modules/dashboard/ui/src/components/DashboardView.js';
-import type { Workspace } from '../../src/modules/dashboard/ui/src/types.js';
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import {
+  loadDashboard,
+  request,
+} from "../../src/modules/dashboard/ui/src/api.js";
+import { DashboardView } from "../../src/modules/dashboard/ui/src/components/DashboardView.js";
+import { SetupView } from "../../src/modules/dashboard/ui/src/components/SetupView.js";
+import type { Workspace } from "../../src/modules/dashboard/ui/src/types.js";
 
 const workspace: Workspace = {
-  configName: 'simulator.config.json',
-  agreementName: 'agreement.docx',
-  baseUrl: 'http://localhost:4700',
+  configName: "simulator.config.json",
+  agreementName: "agreement.docx",
+  baseUrl: "http://localhost:4700",
   port: 4700,
-  seed: '42',
+  seed: "42",
   endpointCount: 1,
-  collectionCount: 0
+  collectionCount: 0,
 };
 
-describe('dashboard HTTP client', () => {
+describe("dashboard HTTP client", () => {
   afterEach(() => vi.unstubAllGlobals());
 
-  it.each(['GET', 'POST', 'DELETE'])(
-    'uses the iframe server origin and omits JSON content type for bodyless %s requests',
+  it.each(["GET", "POST", "DELETE"])(
+    "uses the iframe server origin and omits JSON content type for bodyless %s requests",
     async (method) => {
-      const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
-        new Response(JSON.stringify({ ok: true }))
-      );
-      vi.stubGlobal('fetch', fetchMock);
+      const fetchMock = vi
+        .fn<typeof fetch>()
+        .mockResolvedValue(new Response(JSON.stringify({ ok: true })));
+      vi.stubGlobal("fetch", fetchMock);
 
-      await expect(request('/workspace/reset', { method })).resolves.toEqual({ ok: true });
+      await expect(request("/workspace/reset", { method })).resolves.toEqual({
+        ok: true,
+      });
 
       const [url, init] = fetchMock.mock.calls[0];
-      expect(url).toBe('/_moksy/api/workspace/reset');
+      expect(url).toBe("/_moksy/api/workspace/reset");
       expect(init?.method).toBe(method);
-      expect(new Headers(init?.headers).has('content-type')).toBe(false);
-    }
+      expect(new Headers(init?.headers).has("content-type")).toBe(false);
+    },
   );
 
-  it('sends override JSON with its content type and preserves caller headers', async () => {
-    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
-      new Response(JSON.stringify({ status: 500 }))
-    );
-    vi.stubGlobal('fetch', fetchMock);
+  it("sends override JSON with its content type and preserves caller headers", async () => {
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(new Response(JSON.stringify({ status: 500 })));
+    vi.stubGlobal("fetch", fetchMock);
     const body = JSON.stringify({ status: 500 });
 
-    await request('/endpoints/GET%20%2Fproducts/override', {
-      method: 'PUT', body, headers: { 'x-request-id': 'override-test' }
+    await request("/endpoints/GET%20%2Fproducts/override", {
+      method: "PUT",
+      body,
+      headers: { "x-request-id": "override-test" },
     });
 
     const [, init] = fetchMock.mock.calls[0];
     const headers = new Headers(init?.headers);
     expect(init?.body).toBe(body);
-    expect(headers.get('content-type')).toBe('application/json');
-    expect(headers.get('x-request-id')).toBe('override-test');
+    expect(headers.get("content-type")).toBe("application/json");
+    expect(headers.get("x-request-id")).toBe("override-test");
   });
 
-  it('accepts empty successful responses and surfaces server error messages', async () => {
-    const fetchMock = vi.fn<typeof fetch>()
+  it("accepts empty successful responses and surfaces server error messages", async () => {
+    const fetchMock = vi
+      .fn<typeof fetch>()
       .mockResolvedValueOnce(new Response(null, { status: 204 }))
-      .mockResolvedValueOnce(new Response(JSON.stringify({ message: 'Status not allowed' }), {
-        status: 400
-      }));
-    vi.stubGlobal('fetch', fetchMock);
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ message: "Status not allowed" }), {
+          status: 400,
+        }),
+      );
+    vi.stubGlobal("fetch", fetchMock);
 
-    await expect(request('/endpoints/key/override', { method: 'DELETE' })).resolves.toBeUndefined();
-    await expect(request('/endpoints/key/override', {
-      method: 'PUT', body: JSON.stringify({ status: 999 })
-    })).rejects.toThrow('Status not allowed');
+    await expect(
+      request("/endpoints/key/override", { method: "DELETE" }),
+    ).resolves.toBeUndefined();
+    await expect(
+      request("/endpoints/key/override", {
+        method: "PUT",
+        body: JSON.stringify({ status: 999 }),
+      }),
+    ).rejects.toThrow("Status not allowed");
   });
 
-  it('loads visible dashboard data without depending on the hidden Testing feature', async () => {
-    const fetchMock = vi.fn<typeof fetch>()
+  it("loads visible dashboard data without depending on the hidden Testing feature", async () => {
+    const fetchMock = vi
+      .fn<typeof fetch>()
       .mockResolvedValueOnce(new Response(JSON.stringify(workspace)))
-      .mockResolvedValueOnce(new Response('[]'))
-      .mockResolvedValueOnce(new Response('[]'));
-    vi.stubGlobal('fetch', fetchMock);
+      .mockResolvedValueOnce(new Response("[]"))
+      .mockResolvedValueOnce(new Response("[]"));
+    vi.stubGlobal("fetch", fetchMock);
     const { signal } = new AbortController();
 
     await expect(loadDashboard(signal)).resolves.toEqual({
-      workspace, endpoints: [], collections: []
+      workspace,
+      endpoints: [],
+      collections: [],
     });
     expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
-      '/_moksy/api/workspace', '/_moksy/api/endpoints', '/_moksy/api/collections'
+      "/_moksy/api/workspace",
+      "/_moksy/api/endpoints",
+      "/_moksy/api/collections",
     ]);
-    expect(fetchMock.mock.calls.every(([, init]) => init?.signal === signal)).toBe(true);
+    expect(
+      fetchMock.mock.calls.every(([, init]) => init?.signal === signal),
+    ).toBe(true);
   });
 });
 
-describe('dashboard presentation', () => {
-  it('renders Setup and APIs while keeping Testing hidden and displaying action feedback', () => {
-    const markup = renderToStaticMarkup(createElement(DashboardView, {
-      workspace,
-      endpointCount: 1,
-      tab: 'setup',
-      notice: 'Workspace reloaded',
-      error: 'Could not apply response',
-      pending: false,
-      children: 'Current runtime',
-      onTabChange: vi.fn(),
-      onCopyUrl: vi.fn()
-    }));
+describe("dashboard presentation", () => {
+  it("offers the official API agreement template from the active Moksy server", () => {
+    const markup = renderToStaticMarkup(
+      createElement(SetupView, {
+        workspace,
+        recordCount: 0,
+        pending: false,
+        onReset: vi.fn(),
+      }),
+    );
 
-    expect(markup).toContain('Setup');
-    expect(markup).toContain('APIs');
-    expect(markup).not.toContain('Testing');
-    expect(markup).toContain('Current runtime');
-    expect(markup).toContain('localhost:4700');
+    expect(markup).toContain("Download API agreement template");
+    expect(markup).toContain('href="/_moksy/api/agreement-template"');
+    expect(markup).toContain('download="API_Agreement_Template.docx"');
+  });
+
+  it("renders Setup and APIs while keeping Testing hidden and displaying action feedback", () => {
+    const markup = renderToStaticMarkup(
+      createElement(DashboardView, {
+        workspace,
+        endpointCount: 1,
+        tab: "setup",
+        notice: "Workspace reloaded",
+        error: "Could not apply response",
+        pending: false,
+        children: "Current runtime",
+        onTabChange: vi.fn(),
+        onCopyUrl: vi.fn(),
+      }),
+    );
+
+    expect(markup).toContain("Setup");
+    expect(markup).toContain("APIs");
+    expect(markup).not.toContain("Testing");
+    expect(markup).toContain("Current runtime");
+    expect(markup).toContain("localhost:4700");
     expect(markup).toContain('role="status">Workspace reloaded');
     expect(markup).toContain('role="alert">Could not apply response');
   });
